@@ -21,4 +21,4 @@ scale = Vector2(0.986072, 1.16788)
 shape = SubResource("CapsuleShape2D_2d0qe")
 
 [node name="Muzzle" type="Marker2D" parent="."]
-position = Vector2(1, -51)
+position = Vector2(0, -61)
