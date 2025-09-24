@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://cssu440g3x8o3"]
+
+[ext_resource type="Script" uid="uid://gppsvnjmeax6" path="res://balle.gd" id="1_4weii"]
+[ext_resource type="Texture2D" uid="uid://s24va6o6bj01" path="res://assets/laserRed01.png" id="1_jfmq7"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_4weii"]
+height = 76.0
+
+[node name="Balle" type="Node2D"]
+script = ExtResource("1_4weii")
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+position = Vector2(1, 2)
+shape = SubResource("CapsuleShape2D_4weii")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("1_jfmq7")

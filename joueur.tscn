@@ -1,0 +1,24 @@
+[gd_scene load_steps=4 format=3 uid="uid://58xar87grbq"]
+
+[ext_resource type="Texture2D" uid="uid://3sux3jur06o6" path="res://assets/Spaceship_01_GREEN.png" id="1_2d0qe"]
+[ext_resource type="Script" uid="uid://dabj0ylkqbuj" path="res://joueur.gd" id="1_mc3kx"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_2d0qe"]
+radius = 21.2966
+height = 61.65
+
+[node name="Joueur" type="CharacterBody2D"]
+script = ExtResource("1_mc3kx")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(1, -2)
+scale = Vector2(0.163265, 0.208185)
+texture = ExtResource("1_2d0qe")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(1, -1)
+scale = Vector2(0.986072, 1.16788)
+shape = SubResource("CapsuleShape2D_2d0qe")
+
+[node name="Muzzle" type="Marker2D" parent="."]
+position = Vector2(1, -51)
