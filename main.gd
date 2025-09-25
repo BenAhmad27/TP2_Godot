@@ -2,17 +2,17 @@ extends Node2D
 
 @export_range(3, 500, 2) var num_boids : int = 20  # Nombre cible de boids
 
-@export var enable_separation : bool = false :
+var enable_separation : bool = true :
 	set(value) :
 		enable_separation = value
 		update_forces()
 		
-@export var enable_alignment : bool = false  :
+var enable_alignment : bool = true  :
 	set(value) :
 		enable_alignment = value
 		update_forces()		
 		
-@export var enable_cohesion : bool = false  :
+var enable_cohesion : bool = true  :
 	set(value) :
 		enable_cohesion = value
 		update_forces()
@@ -56,6 +56,7 @@ func remove_boids(count: int):
 # Cette fonction peut être appelée à tout moment pour ajuster le nombre de boids
 func _process(delta):
 	manage_inputs()
+	reset()
 	
 	# Appel d'ajustement pour synchroniser le nombre de boids si le champ change
 	if num_boids != get_children().filter(func(n): return n is Boid).size():
@@ -72,3 +73,7 @@ func update_forces() -> void :
 		boid.has_cohesion = enable_cohesion
 		boid.has_alignment = enable_alignment
 		boid.has_separation = enable_separation
+		
+func reset() -> void:
+	if Input.is_action_just_pressed("reset_game"):
+		get_tree().reload_current_scene()

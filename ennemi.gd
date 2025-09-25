@@ -43,6 +43,8 @@ func _ready():
 	# Initialiser la position du boid de manière aléatoire sur l'écran
 	location.x = randi_range(0, get_viewport_rect().size.x as int)
 	location.y = randi_range(0, get_viewport_rect().size.y as int)
+	
+	add_to_group("boids")
 
 # Fonction appelée à chaque frame
 func _process(delta):

@@ -5,9 +5,6 @@
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_0xm2m")
-enable_separation = true
-enable_alignment = true
-enable_cohesion = true
 
 [node name="Joueur" parent="." instance=ExtResource("1_ig7tw")]
 position = Vector2(591, 606)
