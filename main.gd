@@ -1,6 +1,9 @@
 extends Node2D
 
-@export_range(3, 500, 2) var num_boids : int = 20  # Nombre cible de boids
+@export_range(3, 500, 2) var num_boids : int = 15  # Nombre cible de boids
+
+var start_time = 0
+var wait_time = 5 * 60 * 1000  # 5 minutes en millisecondes
 
 var enable_separation : bool = true :
 	set(value) :
@@ -21,6 +24,7 @@ var enable_cohesion : bool = true  :
 
 func _ready():
 	randomize()  # Initialisation aléatoire
+	start_time = Time.get_ticks_msec()
 	adjust_boids()  # Ajuste le nombre de boids initialement
 	update_forces()
 
@@ -45,6 +49,7 @@ func add_boids(count: int):
 
 # Retirer aléatoirement les boids en excès
 func remove_boids(count: int):
+  # Réinitialiser si tu veux répéter		
 	var current_boids = get_children().filter(func(n): return n is Boid)
 	for i in range(count):
 		var random_boid = current_boids[randi_range(0, current_boids.size() - 1)]
@@ -59,8 +64,14 @@ func _process(delta):
 	reset()
 	
 	# Appel d'ajustement pour synchroniser le nombre de boids si le champ change
+
+		
+	#if Time.get_ticks_msec() - start_time >= wait_time:
 	if num_boids != get_children().filter(func(n): return n is Boid).size():
 		adjust_boids()
+		start_time = Time.get_ticks_msec()
+		print("5 minutes écoulées !")
+		
 
 func manage_inputs() -> void :
 	if (Input.is_action_just_pressed("quit")):

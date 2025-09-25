@@ -39,6 +39,5 @@ func shoot():
 
 			
 func die():
-	print("Game Over !")
 	queue_free()   # supprime le joueur
 	get_tree().reload_current_scene()  #pour recommencer

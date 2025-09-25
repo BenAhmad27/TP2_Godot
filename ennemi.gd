@@ -1,93 +1,91 @@
 extends CharacterBody2D
-
 class_name Boid
 
+# --- Paramètres de base ---
 var max_neighbor : int = 7
+var top_speed : float = 150.0
+var top_steer : float = 2
+var mass : float = 1.0
+var r : float = 10.0
 
-# Paramètres de base du boid
-var top_speed : float = 150.0   # Vitesse maximale du boid
-var top_steer : float = 2       # Force de rotation maximale (limite de la direction)
-var mass : float = 1.0          # Masse du boid
-var r : float = 10.0            # Rayon du boid (utilisé pour le calcul des distances)
+var radius_separation : float = 5 * r
+var radius_alignment : float = 10 * r
+var radius_cohesion : float = 15 * r
 
-# Distances d'influence pour les comportements
-var radius_separation : float = 5 * r   # Rayon d'évitement pour la séparation
-var radius_alignment : float = 10 * r   # Rayon pour l'alignement
-var radius_cohesion : float = 15 * r    # Rayon pour la cohésion
+@export_range(1, 3, 0.25) var weight_separation : float = 2
+@export_range(1, 3, 0.25) var weight_alignment : float = 1.0
+@export_range(1, 3, 0.25) var weight_cohesion : float = 1.0
 
-# Poids des forces appliquées, contrôlés par des glissières dans l'inspecteur
-@export_range(1, 3, 0.25) var weight_separation : float = 2   # Importance de la séparation
-@export_range(1, 3, 0.25) var weight_alignment : float = 1.0  # Importance de l'alignement
-@export_range(1, 3, 0.25) var weight_cohesion : float = 1.0   # Importance de la cohésion
-
-# Vecteurs principaux du boid (position, vitesse et accélération)
 var location : Vector2 = Vector2()
-
 var acceleration : Vector2 = Vector2()
 
 var has_cohesion : bool = true
 var has_separation : bool = true
 var has_alignment : bool = true
 
-# Référence à l'élément Sprite (image) du boid
 @onready var sprite = $Image
 
+# --- Limite pour ne pas toucher le sol ---
+var y_min : float = 50.0
 
-# Fonction appelée au démarrage du boid
+# --- Respawn ---
+var respawn_timer : Timer = Timer.new()
+var is_dead : bool = false
+
+# --- Initialisation ---
 func _ready():
 	randomize()
-	# Initialiser la vitesse aléatoire du boid
 	velocity = Vector2(randf_range(-top_speed, top_speed), randf_range(-top_speed, top_speed))
-	velocity.limit_length(top_speed)  # Limiter la vitesse à top_speed
-	
-	# Initialiser la position du boid de manière aléatoire sur l'écran
+	velocity.limit_length(top_speed)
 	location.x = randi_range(0, get_viewport_rect().size.x as int)
-	location.y = randi_range(0, get_viewport_rect().size.y as int)
-	
+	location.y = randi_range(y_min, get_viewport_rect().size.y as int)
 	add_to_group("boids")
 
-# Fonction appelée à chaque frame
-func _process(delta):
-	var boids = get_boid_siblings()  # Récupérer les autres boids dans la scène
-	
-	# Calculer et appliquer les forces de séparation, d'alignement et de cohésion
-	
-	# Appliquer les forces calculées
-	if has_separation :
-		var separation_force = separation(boids) * weight_separation
-		apply_force(separation_force)
-		
-	if has_alignment :
-		var alignment_force = alignment(boids) * weight_alignment
-		apply_force(alignment_force)
-		
-	if has_cohesion :
-		var cohesion_force = cohesion(boids) * weight_cohesion
-		apply_force(cohesion_force)	
+	# Configurer Timer pour respawn
+	respawn_timer.wait_time = 5  # 5 secondes
+	respawn_timer.one_shot = true
+	respawn_timer.connect("timeout", Callable(self, "_respawn"))
+	add_child(respawn_timer)
 
-	# Mettre à jour la position du boid et gérer la limite de l'écran
+# --- Mise à jour à chaque frame ---
+func _process(delta):
+	if is_dead:
+		return
+
+	var boids = get_boid_siblings()
+	
+	if has_separation:
+		apply_force(separation(boids) * weight_separation)
+	if has_alignment:
+		apply_force(alignment(boids) * weight_alignment)
+	if has_cohesion:
+		apply_force(cohesion(boids) * weight_cohesion)
+
 	update_position(delta)
 	wrap_around_screen()
-	
-	# Faire pivoter le sprite en fonction de la direction de la vitesse
+
+	# Ne pas toucher le sol
+	if location.y < y_min:
+		location.y = y_min
+		velocity.y = abs(velocity.y)
+
 	if velocity.length() > 0:
-		rotation = velocity.angle()  # Faire tourner le boid en fonction de sa direction de mouvement
-	
+		rotation = velocity.angle()
 	queue_redraw()
 
-# Appliquer une force sur le boid
+# --- Appliquer une force ---
 func apply_force(force: Vector2):
-	acceleration += force / mass   # Appliquer la force en tenant compte de la masse
+	acceleration += force / mass
 
-# Mettre à jour la position du boid
+# --- Mettre à jour la position ---
 func update_position(delta):
-	velocity += acceleration   # Mettre à jour la vitesse en fonction de l'accélération
-	velocity = velocity.limit_length(top_speed)  # Limiter la vitesse à la valeur maximale
-	location += velocity * delta  # Calculer la nouvelle position
-	acceleration = Vector2()  # Réinitialiser l'accélération après application
-	position = location  # Mettre à jour la position dans l'espace de la scène
+	velocity += acceleration
+	velocity = velocity.limit_length(top_speed)
+	location += velocity * delta
+	acceleration = Vector2()
+	position = location
 
-# Empêcher le boid de sortir de l'écran (effet de wrap-around)
+# --- Wrap autour de l'écran ---
 func wrap_around_screen():
 	if location.x > get_viewport_rect().size.x:
 		location.x = 0
@@ -96,82 +94,88 @@ func wrap_around_screen():
 
 	if location.y > get_viewport_rect().size.y:
 		location.y = 0
-	elif location.y < 0:
-		location.y = get_viewport_rect().size.y
+	elif location.y < y_min:
+		location.y = y_min
 
-# Calcul de la force de séparation (éviter les collisions avec d'autres boids)
+# --- Séparation ---
 func separation(boids: Array) -> Vector2:
 	var steer : Vector2 = Vector2()
 	var total : int = 0
-	
 	for other in boids:
 		var distance = location.distance_to(other.position)
 		if distance < radius_separation and other != self:
 			var diff = location - other.position
-			diff = diff.normalized() / distance  # Inverser la direction de la force d'évitement
+			diff = diff.normalized() / distance
 			steer += diff
-			total += 1 # Compter le nombre de boids voisins
-			
-		if total > max_neighbor - 1 :
-			# Limiter le nombre de voisins pris en compte pour la séparation
+			total += 1
+		if total > max_neighbor - 1:
 			break
-
 	if total > 0:
-		steer /= total  # Moyenne de toutes les forces
-		steer = steer.normalized() * top_speed - velocity  # Calcul du vecteur de direction
-		steer = steer.limit_length(top_steer)  # Limiter la force de rotation
+		steer /= total
+		steer = steer.normalized() * top_speed - velocity
+		steer = steer.limit_length(top_steer)
 	return steer
 
-# Calcul de la force d'alignement (se déplacer dans la même direction que les boids voisins)
+# --- Alignement ---
 func alignment(boids: Array) -> Vector2:
 	var average_velocity = Vector2()
 	var total = 0
-	
 	for other in boids:
 		var distance = location.distance_to(other.position)
 		if distance < radius_alignment and other != self:
-			average_velocity += other.velocity  # Ajouter la vitesse des autres boids voisins
+			average_velocity += other.velocity
 			total += 1
-		if total > max_neighbor - 1 :
+		if total > max_neighbor - 1:
 			break
 	if total > 0:
-		average_velocity /= total  # Moyenne des vitesses des boids voisins
+		average_velocity /= total
 		average_velocity = average_velocity.normalized() * top_speed
-		var steer = average_velocity - velocity  # Calculer la force de direction pour s'aligner
+		var steer = average_velocity - velocity
 		steer = steer.limit_length(top_steer)
 		return steer
 	return Vector2()
 
-# Calcul de la force de cohésion (se rapprocher des autres boids)
+# --- Cohésion ---
 func cohesion(boids: Array) -> Vector2:
 	var average_position = Vector2()
 	var total = 0
-
 	for other in boids:
 		var distance = location.distance_to(other.position)
 		if distance < radius_cohesion and other != self:
-			average_position += other.position  # Ajouter les positions des boids voisins
+			average_position += other.position
 			total += 1
-		if total > max_neighbor - 1 :
+		if total > max_neighbor - 1:
 			break
 	if total > 0:
-		average_position /= total  # Moyenne des positions des boids voisins
-		return seek(average_position)  # Chercher à se rapprocher du centre de la masse
+		average_position /= total
+		return seek(average_position)
 	return Vector2()
 
-# Chercher une position cible donnée
+# --- Seek cible ---
 func seek(target: Vector2) -> Vector2:
 	var desired = (target - location).normalized() * top_speed
-	var steer = desired - velocity  # Calculer la force de direction vers la cible
+	var steer = desired - velocity
 	steer = steer.limit_length(top_steer)
 	return steer
 
-# Récupérer uniquement les boids dans la scène
+# --- Récupérer tous les boids ---
 func get_boid_siblings() -> Array:
 	var boids = []
 	for sibling in get_parent().get_children():
-		if sibling is Boid:  # Vérifier que l'enfant est bien un boid
+		if sibling is Boid:
 			boids.append(sibling)
-	return boids	
+	return boids
 
-		
+# --- Disparition / mort ---
+func die():
+	is_dead = true
+	hide()
+	respawn_timer.start()
+
+# --- Respawn après timer ---
+func _respawn():
+	location.x = randi_range(0, get_viewport_rect().size.x as int)
+	location.y = randi_range(y_min, get_viewport_rect().size.y as int)
+	velocity = Vector2(randf_range(-top_speed, top_speed), randf_range(-top_speed, top_speed))
+	show()
+	is_dead = false

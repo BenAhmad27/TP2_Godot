@@ -4,18 +4,17 @@
 [ext_resource type="Texture2D" uid="uid://yb8i15wub87l" path="res://assets/boid.png" id="1_m0ij1"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_m0ij1"]
-radius = 9.0
-height = 28.0
+radius = 14.0
 
 [node name="Ennemi" type="CharacterBody2D"]
 script = ExtResource("1_5npyw")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(0.55643, 0.234828)
-rotation = -1.53636
-scale = Vector2(0.221025, 0.27929)
+position = Vector2(0, 2.38419e-07)
+rotation = -1.56054
+scale = Vector2(0.308744, 0.364874)
 texture = ExtResource("1_m0ij1")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, 1)
+position = Vector2(0, 3)
 shape = SubResource("CapsuleShape2D_m0ij1")
